@@ -1,0 +1,11 @@
+{% if error_message %}
+    <div class="error-message mt-3 text-danger text-center mx-auto"
+         style="max-width: 300px">
+        <strong>Error:</strong> {{ error_message }}
+    </div>
+{% endif %}
+{% if message %}
+    <div class="alert alert-success mt-3 text-center mx-auto"
+         style="max-width: 300px"
+         role="alert">{{ message }}</div>
+{% endif %}

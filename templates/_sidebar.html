@@ -1,0 +1,53 @@
+<div class="sidebar">
+    <form method="get" action="/find">
+        <!-- Category dropdown -->
+        <div class="mb-3">
+            <label for="category" class="form-label">Категория</label>
+            <select name="category" id="category" class="form-control">
+                <option value="">Все</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id == request.args.get('category')|int %}selected{% endif %}>
+                        • {{ category.title }}{% if category.subcategories|length > 0 %}{% endif %}
+                    </option>
+                    {% if category.subcategories %}
+                        {% for subcategory in category.subcategories %}
+                            <option value="{{ subcategory.id }}" {% if subcategory.id == request.args.get('category')|int %}selected{% endif %}>
+                                - {{ subcategory.title }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="transaction_type" class="form-label">Тип сделки</label>
+            <select name="transaction_type" id="transaction_type" class="form-control">
+                <option value="both" {% if request.args.get('transaction_type') == 'both' %}selected{% endif %}>Все</option>
+                <option value="buy" {% if request.args.get('transaction_type') == 'buy' %}selected{% endif %}>Только покупка</option>
+                <option value="trade" {% if request.args.get('transaction_type') == 'trade' %}selected{% endif %}>Только обмен</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="sort_by" class="form-label">Сортировать по</label>
+            <select name="sort_by" id="sort_by" class="form-control">
+                <option value="price" {% if request.args.get('sort_by') == 'price' %}selected{% endif %}>Цене</option>
+                <option value="created_at" {% if request.args.get('sort_by') == 'created_at' %}selected{% endif %}>Дате публикации</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="sort_order" class="form-label">Порядок сортировки</label>
+            <select name="sort_order" id="sort_order" class="form-control">
+                <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>По возрастанию</option>
+                <option value="desc" {% if request.args.get('sort_order') == 'desc' %}selected{% endif %}>По убыванию</option>
+            </select>
+        </div>
+
+        <!-- Find Button -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary w-100">Найти</button>
+        </div>
+    </form>
+</div>
+

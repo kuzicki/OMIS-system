@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Edit Item</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+              rel="stylesheet" />
+        <style>
+            .preview-box {
+                width: 200px;
+                height: 200px;
+                overflow: hidden;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                margin-bottom: 10px;
+            }
+            .preview-box img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            .container-fluid {
+                max-width: 1200px;
+                margin-top: 20px;
+            }
+            .info-section {
+                margin-bottom: 20px;
+            }
+            .info-title {
+                font-weight: bold;
+            }
+            .file-preview {
+                white-space: pre-wrap;
+                background-color: #f8f9fa;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                max-height: 150px;
+                overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body class="bg-light">
+        {% include '_navbar.html' %}
+        <div class="container-fluid">
+            <h1 class="display-4 text-primary">Edit Item</h1>
+            <form method="POST"
+                  action="/update-item/{{ item.id }}"
+                  enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="info-section">
+                            <label for="title" class="info-title">Name:</label>
+                            <input type="text"
+                                   id="title"
+                                   name="title"
+                                   class="form-control"
+                                   value="{{ item.title }}"
+                                   required />
+                        </div>
+                        <div class="info-section">
+                            <label for="price" class="info-title">Price:</label>
+                            <input type="number"
+                                   id="price"
+                                   name="price"
+                                   class="form-control"
+                                   value="{{ item.price }}"
+                                   step="0.01"
+                                   required />
+                        </div>
+                        <div class="info-section">
+                            <label for="item_type" class="info-title">Item Type:</label>
+                            <select id="item_type" name="item_type" class="form-select" required>
+                                <option value="buy" {% if item.item_type=="buy" %}selected{% endif %}>Buy</option>
+                                <option value="trade" {% if item.item_type=="trade" %}selected{% endif %}>Trade</option>
+                                <option value="both" {% if item.item_type=="both" %}selected{% endif %}>Both</option>
+                            </select>
+                        </div>
+                        <div class="info-section">
+                            <label for="description" class="info-title">Description:</label>
+                            <textarea id="description"
+                                      name="description"
+                                      class="form-control"
+                                      rows="4"
+                                      required>{{ item.description }}</textarea>
+                        </div>
+                        <div class="info-section">
+                            <label for="file" class="info-title">Upload New File:</label>
+                            <input type="file" id="file" name="file" class="form-control" />
+                            {% if file_preview %}
+                                <p class="info-title mt-3">Current File Preview (first 500 characters):</p>
+                                <div class="file-preview">{{ file_preview }}</div>
+                            {% else %}
+                                <p>No file uploaded</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                <div class="col-md-4">
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Категория</label>
+                        <select name="category" id="category" class="form-control">
+                            <option value="">Все</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category.id == item.category_id %}selected{% endif %}>
+                                    • {{ category.title }}{% if category.subcategories|length > 0 %}</option>
+                                    {% for subcategory in category.subcategories %}
+                                        <option value="{{ subcategory.id }}" {% if subcategory.id == item.category_id %}selected{% endif %}>
+                                            - {{ subcategory.title }}
+                                        </option>
+                                    {% endfor %}
+                                {% else %}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+
+                        <div class="info-section">
+                            <p class="info-title">Current Image:</p>
+                            {% if item.image_link %}
+                                <div class="preview-box">
+                                    <img src="/static/images/{{ item.image_link }}"
+                                         alt="{{ item.image_link }}" />
+                                </div>
+                            {% else %}
+                                <p>No image uploaded</p>
+                            {% endif %}
+                        </div>
+                        <div class="info-section">
+                            <label for="image" class="info-title">Upload New Image:</label>
+                            <input type="file" id="image" name="image" class="form-control" />
+                            <div id="image-preview-container" style="mt-2">
+                                <div id="image-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center gap-3 mt-5">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="/view-item/{{ item.id }}" class="btn btn-secondary">Go to view</a>
+                </div>
+            </form>
+            {% if error_message %}
+                <div class="error-message mt-3 text-danger">
+                    <strong>Error:</strong> {{ error_message }}
+                </div>
+            {% endif %}
+        </div>
+        <script>
+        document
+            .getElementById("file")
+            .addEventListener("change", function (event) {
+                var file = event.target.files[0];
+                var filePreviewContainer = document.getElementById("file-preview-container");
+                var filePreview = document.getElementById("file-preview");
+
+                if (file) {
+                    filePreviewContainer.style.display = "block";
+                    var reader = new FileReader();
+
+                    if (file.type.startsWith("image/")) {
+                        reader.onload = function (e) {
+                            filePreview.innerHTML =
+                                '<div class="preview-box"><img src="' + e.target.result + '" alt="File preview"></div>';
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (file.type.startsWith("text/") || file.name.endsWith(".txt")) {
+                        reader.onload = function (e) {
+                            var content = e.target.result;
+                            filePreview.innerHTML = "<pre>" + content.substring(0, 500) + "</pre>";
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        filePreview.innerHTML = "Selected file: " + file.name;
+                    }
+                } else {
+                    filePreviewContainer.style.display = "none";
+                }
+            });
+
+        document
+            .getElementById("image")
+            .addEventListener("change", function (event) {
+                var imageFile = event.target.files[0];
+                var imagePreviewContainer = document.getElementById("image-preview-container");
+                var imagePreview = document.getElementById("image-preview");
+
+                if (imageFile) {
+                    imagePreviewContainer.style.display = "block";
+
+                    if (imageFile.type.startsWith("image/")) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            imagePreview.innerHTML =
+                                '<div class="preview-box"><img src="' + e.target.result + '" alt="Image preview"></div>';
+                        };
+                        reader.readAsDataURL(imageFile);
+                    } else {
+                        imagePreview.innerHTML = "Selected file is not an image.";
+                    }
+                } else {
+                    imagePreviewContainer.style.display = "none";
+                }
+            });
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>
+

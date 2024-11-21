@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>View complaints</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+              rel="stylesheet">
+    </head>
+    <body class="bg-light">
+        {% include '_navbar.html' %}
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Main Content (Results) -->
+                <div class="col-md-4">
+                    <h1 class="display-4 text-primary">View complaints</h1>
+                    {% if complaints %}
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Item name</th>
+                                    <th>Nickname</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for complaint in complaints %}
+                                    <tr>
+                                        <td>{{ complaint.item.title }}</td>
+                                        <td>{{ complaint.user.nickname }}</td>
+                                        <td>
+                                            <a href="/complaint/{{ complaint.id }}" class="btn btn-info">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>Complaints weren't found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "include": [
+    "app/**/*",
+    "main.py"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "app"
+    }
+  ]
+}

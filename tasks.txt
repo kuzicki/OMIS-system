@@ -1,0 +1,82 @@
+
+trade(add, accept/reject) x
+complaints(add) x
+favorites x
+display currency
+
+profile(edit, view) x
+better add item(image, file upload) x
+buy items x
+
+
+
+view complaints(add so that blocked users can't visit pages)
+previliged x
+view without buttons
+
+remove items from find if the user is banned and also from favorites and the trades
+
+
+saved
+@user_routes.route("/find")
+def find():
+    redirect_response = check_user_session()
+    if redirect_response:
+        return redirect_response
+
+    categories = Category.query.filter_by(parent_id=None).all()
+
+    selected_category_id = request.args.get("category")
+    selected_category = None
+    if selected_category_id:
+        selected_category = Category.query.get(selected_category_id)
+
+    search_term = request.args.get("search", "")
+    items_query = Item.query
+
+    if search_term != "":
+        items_query = items_query.filter(Item.title.contains(search_term))
+    items = items_query.all()
+
+    if selected_category_id:
+        subcategory_ids = [
+            id
+            for id, in db.session.query(Category.id).filter(
+                Category.parent_id == selected_category_id
+            )
+        ]
+
+        items_query = items_query.filter(
+            or_(
+                Item.category_id == selected_category_id,
+                Item.category_id.in_(subcategory_ids),
+            )
+        )
+
+    transaction_type = request.args.get("transaction_type", "both")
+
+    if transaction_type != "both":
+        items_query = items_query.filter(Item.item_type == transaction_type)
+
+    sort_by = request.args.get("sort_by", "price")
+    sort_order = request.args.get("sort_order", "asc")
+
+    if sort_by == "price":
+        if sort_order == "asc":
+            items_query = items_query.order_by(Item.price.asc())
+        else:
+            items_query = items_query.order_by(Item.price.desc())
+    elif sort_by == "created_at":
+        if sort_order == "asc":
+            items_query = items_query.order_by(Item.created_at.asc())
+        else:
+            items_query = items_query.order_by(Item.created_at.desc())
+
+    items = items_query.all()
+    return render_template(
+        "user_find.html",
+        categories=categories,
+        selected_category=selected_category,
+        items=items,
+    )
+

@@ -1,0 +1,161 @@
+диабет
+
+
+
+
+  ScTemplate templ;
+  ScTemplateSearchResult templ_result;
+
+  templ.Quintuple(node_addr, ScType::EdgeDCommonVar >> "edge",
+                  ScType::NodeVar >> "out_node", ScType::EdgeAccessVarPosPerm,
+                  ScType::NodeVar >> "rel");
+  m_context.SearchByTemplate(templ, templ_result);
+  std::cout << "Size 1: " << templ_result.Size() << std::endl;
+  for (int i = 0; i < templ_result.Size(); i++) {
+    auto edge = templ_result[i]["edge"];
+    auto out_node = templ_result[i]["out_node"];
+    auto rel = templ_result[i]["rel"];
+    edge_set.insert(edge.Hash());
+    std::string out_node_str = m_context.GetElementSystemIdentifier(out_node);
+    std::string rel_str = m_context.GetElementSystemIdentifier(rel);
+    SC_AGENT_LOG_INFO("Out: " + out_node_str + ", rel: " + rel_str);
+  }
+
+  ScTemplate templ1;
+  ScTemplateSearchResult templ_result1;
+  templ1.Quintuple(ScType::NodeVar >> "node",
+                  ScType::EdgeDCommonVar >> "edge", node_addr,
+                  ScType::EdgeAccessVarPosPerm, ScType::NodeVar >> "rel");
+  m_context.SearchByTemplate(templ1, templ_result1);
+  std::cout << "Size 2: " << templ_result1.Size() << std::endl;
+  for (int i = 0; i < templ_result1.Size(); i++) {
+    auto edge = templ_result1[i]["edge"];
+    auto node = templ_result1[i]["node"];
+    auto rel = templ_result1[i]["rel"];
+    edge_set.insert(edge.Hash());
+    std::string node_str = m_context.GetElementSystemIdentifier(node);
+    std::string rel_str = m_context.GetElementSystemIdentifier(rel);
+    SC_AGENT_LOG_INFO("Node: " + node_str + ", rel: " + rel_str);
+  }
+
+  ScTemplate templ2;
+  ScTemplateSearchResult templ_result2;
+  templ2.Triple(node_addr, ScType::EdgeAccessVarPosPerm >> "edge",
+                  ScType::NodeVar >> "out_node");
+  m_context.SearchByTemplate(templ2, templ_result2);
+  std::cout << "Size 3: " << templ_result2.Size() << std::endl;
+  for (int i = 0; i < templ_result2.Size(); i++) {
+    auto edge = templ_result2[i]["edge"];
+    if (edge_set.find(edge.Hash()) != edge_set.end()) {
+      continue;
+    }
+    auto node = templ_result2[i]["node"];
+    edge_set.insert(edge.Hash());
+    std::string node_str = m_context.GetElementSystemIdentifier(node);
+    SC_AGENT_LOG_INFO("Node: " + node_str);
+  }
+
+  ScTemplate templ3;
+  ScTemplateSearchResult templ_result3;
+  templ.Triple(ScType::NodeVar >> "node", ScType::EdgeAccessVarPosPerm >> "edge",
+                  node_addr);
+  m_context.SearchByTemplate(templ3, templ_result3);
+  std::cout << "Size 4: " << templ_result3.Size() << std::endl;
+  for (int i = 0; i < templ_result3.Size(); i++) {
+    auto edge = templ_result3[i]["edge"];
+    if (edge_set.find(edge.Hash()) != edge_set.end()) {
+      continue;
+    }
+    auto out_node = templ_result3[i]["node"];
+    edge_set.insert(edge.Hash());
+    std::string out_node_str = m_context.GetElementSystemIdentifier(out_node);
+    SC_AGENT_LOG_INFO("Out: " + out_node_str);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lang_en
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
