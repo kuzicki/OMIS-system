@@ -47,11 +47,13 @@ def find():
     items, selected_category, categories = ItemService.get_find_results(
         selected_category_id, search_term, transaction_type, sort_by, sort_order
     )
+    user_currency = UserService.get_currency(session["user_id"])
     return render_template(
         "user_find.html",
         categories=categories,
         selected_category=selected_category,
         items=items,
+        user_currency=user_currency,
     )
 
 
@@ -61,8 +63,9 @@ def items():
     if redirect_response:
         return redirect_response
     items = ItemService.get_user_items(session["user_id"])
+    user_currency = UserService.get_currency(session["user_id"])
 
-    return render_template("user_items.html", items=items)
+    return render_template("user_items.html", items=items, user_currency=user_currency)
 
 
 @user_routes.route("/remove-item/<int:item_id>", methods=["POST"])
@@ -101,6 +104,7 @@ def add_item():
     if redirect_response:
         return redirect_response
 
+    user_currency = UserService.get_currency(session["user_id"])
     if request.method == "POST":
         name = request.form["name"]
         price = int(request.form["price"])
@@ -125,11 +129,15 @@ def add_item():
 
         ItemService.add_item(new_item)
 
-        categories = Category.query.all()
-        return render_template("add_item.html", categories=categories)
+        categories = Category.query.filter_by(parent_id=None).all()
+        return render_template(
+            "add_item.html", categories=categories, user_currency=user_currency
+        )
 
     categories = Category.query.all()
-    return render_template("add_item.html", categories=categories)
+    return render_template(
+        "add_item.html", categories=categories, user_currency=user_currency
+    )
 
 
 @user_routes.route("/update-item/<int:item_id>", methods=["POST"])
@@ -178,6 +186,7 @@ def edit_item(item_id):
     error_message = session.pop("error_message", None)
 
     categories = Category.query.filter_by(parent_id=None).all()
+    user_currency = UserService.get_currency(session["user_id"])
     return render_template(
         "user_edit_item.html",
         item=item,
@@ -185,6 +194,7 @@ def edit_item(item_id):
         file_preview=file_preview,
         error_message=error_message,
         categories=categories,
+        user_currency=user_currency,
     )
 
 
@@ -193,10 +203,10 @@ def view_item(item_id):
     if "user_id" not in session:
         return redirect(url_for("auth_routes.welcome"))
 
-    if UserService.is_blocked:
+    if UserService.is_blocked(session["user_id"]):
         return render_template("blocked.html")
 
-    if not UserService.is_valid:
+    if not UserService.is_valid(session["user_id"]):
         return redirect(url_for("auth_routes.welcome"))
 
     item = Item.query.filter_by(id=item_id).first()
@@ -208,6 +218,7 @@ def view_item(item_id):
     file_preview = ItemService.get_preview(item_id)
     favorite = FavoriteService.is_favorite(session["user_id"], item_id)
     error_message = session.pop("error_message", None)
+    user_currency = UserService.get_currency(session["user_id"])
     return render_template(
         "user_view_item.html",
         item=item,
@@ -215,6 +226,7 @@ def view_item(item_id):
         file_preview=file_preview,
         favorite=favorite,
         error_message=error_message,
+        user_currency=user_currency,
     )
 
 
@@ -223,10 +235,10 @@ def view_profile(user_id):
     if "user_id" not in session:
         return redirect(url_for("auth_routes.welcome"))
 
-    if UserService.is_blocked:
+    if UserService.is_blocked(session["user_id"]):
         return render_template("blocked.html")
 
-    if not UserService.is_valid:
+    if not UserService.is_valid(session["user_id"]):
         return redirect(url_for("auth_routes.welcome"))
 
     items = ItemService.get_user_items(user_id)
@@ -234,9 +246,14 @@ def view_profile(user_id):
 
     admin = UserService.get_user(id=session["user_id"])
     is_admin = admin.role.value
+    user_currency = UserService.get_currency(session["user_id"])
 
     return render_template(
-        "user_view_profile.html", items=items, user=user, is_admin=is_admin
+        "user_view_profile.html",
+        items=items,
+        user=user,
+        is_admin=is_admin,
+        user_currency=user_currency,
     )
 
 
@@ -245,6 +262,7 @@ def profile():
     redirect_response = check_user_session()
     if redirect_response:
         return redirect_response
+    user_currency = UserService.get_currency(session["user_id"])
     if request.method == "POST":
         full_name = request.form["full_name"]
         email = request.form["email"]
@@ -257,16 +275,18 @@ def profile():
                 "user_profile.html",
                 user=user,
                 error_message="Failed to update the changes",
+                user_currency=user_currency,
             )
         else:
             return render_template(
                 "user_profile.html",
                 user=user,
                 message="Successfully updated the profile",
+                user_currency=user_currency,
             )
 
     user = UserService.get_user(session["user_id"])
-    return render_template("user_profile.html", user=user)
+    return render_template("user_profile.html", user=user, user_currency=user_currency)
 
 
 @user_routes.route("/favorites")
@@ -276,8 +296,9 @@ def favorite():
         return redirect_response
 
     items = FavoriteService.get_favorite(session["user_id"])
+    user_currency = UserService.get_currency(session["user_id"])
 
-    return render_template("favorites.html", items=items)
+    return render_template("favorites.html", items=items, user_currency=user_currency)
 
 
 @user_routes.route("/remove-favorite/<int:item_id>", methods=["POST"])
@@ -316,7 +337,8 @@ def make_complaint(item_id: int):
 
     item = ItemService.get_item(item_id)
 
-    return render_template("user_make_complaint.html", item=item, message=message)
+    user_currency = UserService.get_currency(session["user_id"])
+    return render_template("user_make_complaint.html", item=item, message=message, user_currency=user_currency)
 
 
 @user_routes.route("/offer-trade/<int:item_id>", methods=["GET", "POST"])
@@ -340,6 +362,7 @@ def offer_trade(item_id: int):
             message = "Offer has been sent"
 
     items = ItemService.get_my_items_for_trade(session["user_id"], item_id)
+    user_currency = UserService.get_currency(session["user_id"])
 
     return render_template(
         "user_offer_trade.html",
@@ -347,6 +370,7 @@ def offer_trade(item_id: int):
         item_id=item_id,
         message=message,
         error_message=error_message,
+        user_currency=user_currency
     )
 
 
@@ -379,11 +403,13 @@ def trade():
 
     message = session.pop("message", None)
     error_message = session.pop("error_message", None)
+    user_currency = UserService.get_currency(session["user_id"])
     return render_template(
         "user_trades.html",
         trade_details=trade_details,
         message=message,
         error_message=error_message,
+        user_currency=user_currency
     )
 
 

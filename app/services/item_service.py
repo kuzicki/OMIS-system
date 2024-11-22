@@ -108,14 +108,6 @@ class ItemService:
         if selected_category_id:
             selected_category = Category.query.get(selected_category_id)
 
-        if selected_category_id:
-            subcategory_ids = [
-                id
-                for id, in db.session.query(Category.id).filter(
-                    Category.parent_id == selected_category_id
-                )
-            ]
-
         items_query = Item.query.join(
             User,
             and_(
@@ -125,8 +117,14 @@ class ItemService:
             ),
         )
 
-        if search_term != "":
-            items_query = items_query.filter(Item.title.contains(search_term))
+
+        if selected_category_id:
+            subcategory_ids = [
+                id
+                for id, in db.session.query(Category.id).filter(
+                    Category.parent_id == selected_category_id
+                )
+            ]
 
             items_query = items_query.filter(
                 or_(
@@ -134,6 +132,11 @@ class ItemService:
                     Item.category_id.in_(subcategory_ids),
                 )
             )
+
+
+        if search_term != "":
+            items_query = items_query.filter(Item.title.contains(search_term))
+
 
         if transaction_type != "both":
             items_query = items_query.filter(Item.item_type == transaction_type)

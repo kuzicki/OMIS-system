@@ -22,7 +22,7 @@ class User(db.Model):
     blocked_until = Column(TIMESTAMP, nullable=True)
     role = db.Column(db.Enum(UserRoleEnum), default=UserRoleEnum.user)
 
-    currency = Column(Integer, default=1000)
+    currency = Column(Integer, default=1000000000)
     description = Column(Text)
 
     # Use string-based relationships
@@ -39,7 +39,7 @@ class User(db.Model):
         is_blocked: bool = False, 
         blocked_until: Optional[datetime] = None, 
         role: UserRoleEnum = UserRoleEnum.user, 
-        currency: int = 1000, 
+        currency: Optional[int] = None, 
         description: Optional[str] = None
     ):
         self.email = email

@@ -63,7 +63,6 @@ def register():
 
         session["user_id"] = new_user.id
 
-        flash("Registration successful! Please log in.", "success")
         return redirect(url_for("menu_routes.menu"))
 
     return render_template("register.html")

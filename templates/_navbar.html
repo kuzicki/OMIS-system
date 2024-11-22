@@ -24,6 +24,13 @@
                     <a class="nav-link" href="/logout">Logout</a>
                 </li>
             </ul>
+            {% if user_currency is not none %}
+            <div class="ms-auto">
+                <span class="navbar-text">
+                    User currency: {{ user_currency }}
+                </span>
+            </div>
+            {% endif %}
         </div>
     </div>
 </nav>

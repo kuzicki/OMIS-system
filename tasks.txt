@@ -14,9 +14,9 @@ view complaints(add so that blocked users can't visit pages) x
 previliged x
 view without buttons x
 
-validate user on each page
+validate user on each page x
 
-remove items from find if the user is banned and also from favorites and the trades
+remove items from find if the user is banned and also from favorites and the trades x
 
 
 saved

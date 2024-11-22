@@ -1,135 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск товаров</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Find items</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+              rel="stylesheet">
+        <style>
         /* Ensure the sidebar stays fixed */
         .sidebar {
             position: sticky;
             top: 0;
         }
-    </style>
-</head>
-<body class="bg-light">
-    {% include '_navbar.html' %}
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3">
-                <form method="get" action="{{ url_for('user_routes.find') }}">
-                    <!-- Search Input -->
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Поиск</label>
-                        <input type="text" class="form-control" id="search" name="search" value="{{ request.args.get('search') or '' }}" placeholder="Поиск товаров">
-                    </div>
-
-                    <!-- Category dropdown -->
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Категория</label>
-                        <select name="category" id="category" class="form-control">
-                            <option value="">Все</option>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}" {% if category.id == request.args.get('category')|int %}selected{% endif %}>
-                                    • {{ category.title }}{% if category.subcategories|length > 0 %}{% endif %}
+        </style>
+    </head>
+    <body class="bg-light">
+        {% include '_navbar.html' %}
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-3">
+                    <form method="get" action="{{ url_for("user_routes.find") }}">
+                        <!-- Search Input -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Find</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="search"
+                                   name="search"
+                                   value="{{ request.args.get("search") or '' }}"
+                                   placeholder="Type in for the search">
+                        </div>
+                        <!-- Category dropdown -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-control">
+                                <option value="">All</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}"
+                                            {% if category.id == request.args.get('category')|int %}selected{% endif %}>
+                                        • {{ category.title }}
+                                        {% if category.subcategories|length > 0 %}{% endif %}
+                                    </option>
+                                    {% if category.subcategories %}
+                                        {% for subcategory in category.subcategories %}
+                                            <option value="{{ subcategory.id }}"
+                                                    {% if subcategory.id == request.args.get('category')|int %}selected{% endif %}>
+                                                - {{ subcategory.title }}
+                                            </option>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transaction_type" class="form-label">Item transaction type</label>
+                            <select name="transaction_type" id="transaction_type" class="form-control">
+                                <option value="both"
+                                        {% if request.args.get('transaction_type') == 'both' %}selected{% endif %}>
+                                    All
                                 </option>
-                                {% if category.subcategories %}
-                                    {% for subcategory in category.subcategories %}
-                                        <option value="{{ subcategory.id }}" {% if subcategory.id == request.args.get('category')|int %}selected{% endif %}>
-                                            - {{ subcategory.title }}
-                                        </option>
-                                    {% endfor %}
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="transaction_type" class="form-label">Тип сделки</label>
-                        <select name="transaction_type" id="transaction_type" class="form-control">
-                            <option value="both" {% if request.args.get('transaction_type') == 'both' %}selected{% endif %}>Все</option>
-                            <option value="buy" {% if request.args.get('transaction_type') == 'buy' %}selected{% endif %}>Только покупка</option>
-                            <option value="trade" {% if request.args.get('transaction_type') == 'trade' %}selected{% endif %}>Только обмен</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="sort_by" class="form-label">Сортировать по</label>
-                        <select name="sort_by" id="sort_by" class="form-control">
-                            <option value="price" {% if request.args.get('sort_by') == 'price' %}selected{% endif %}>Цене</option>
-                            <option value="created_at" {% if request.args.get('sort_by') == 'created_at' %}selected{% endif %}>Дате публикации</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="sort_order" class="form-label">Порядок сортировки</label>
-                        <select name="sort_order" id="sort_order" class="form-control">
-                            <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>По возрастанию</option>
-                            <option value="desc" {% if request.args.get('sort_order') == 'desc' %}selected{% endif %}>По убыванию</option>
-                        </select>
-                    </div>
-
-                    <!-- Find Button -->
-                    <div class="mb-3">
-                        <button type="submit" class="btn btn-primary w-100">Найти</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Main Content (Results) -->
-            <div class="col-md-9">
-
-                {% if errors %}
-                    <div class="alert alert-danger alert-sm mx-auto" style="max-width: 400px;">
-                        <ul class="list-unstyled">
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-
-                <!-- Results Table -->
-                <h2 class="text-primary">Результаты поиска</h2>
-
-                {% if items %}
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Название</th>
-                                <th>Цена</th>
-                                <th>Тип сделки</th>
-                                <th>Категория</th>
-                                <th>Дата</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in items %}
+                                <option value="buy"
+                                        {% if request.args.get('transaction_type') == 'buy' %}selected{% endif %}>
+                                    Only buy
+                                </option>
+                                <option value="trade"
+                                        {% if request.args.get('transaction_type') == 'trade' %}selected{% endif %}>
+                                    Only trade
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sort_by" class="form-label">Sort by</label>
+                            <select name="sort_by" id="sort_by" class="form-control">
+                                <option value="price"
+                                        {% if request.args.get('sort_by') == 'price' %}selected{% endif %}>
+                                    Price
+                                </option>
+                                <option value="created_at"
+                                        {% if request.args.get('sort_by') == 'created_at' %}selected{% endif %}>
+                                    Publish date
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sort_order" class="form-label">Sort type</label>
+                            <select name="sort_order" id="sort_order" class="form-control">
+                                <option value="asc"
+                                        {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>
+                                    Ascending
+                                </option>
+                                <option value="desc"
+                                        {% if request.args.get('sort_order') == 'desc' %}selected{% endif %}>
+                                    Descending
+                                </option>
+                            </select>
+                        </div>
+                        <!-- Find Button -->
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary w-100">Find</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- Main Content (Results) -->
+                <div class="col-md-9">
+                    {% if errors %}
+                        <div class="alert alert-danger alert-sm mx-auto" style="max-width: 400px;">
+                            <ul class="list-unstyled">
+                                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <!-- Results Table -->
+                    <h2 class="text-primary">Search results</h2>
+                    {% if items %}
+                        <table class="table table-bordered">
+                            <thead>
                                 <tr>
-                                    <td>{{ item.title }}</td>
-                                    <td>{{ item.price }}</td>
-                                    <td>{{ item.item_type }}</td>
-                                    <td>{{ item.category.title if item.category else 'Нет категории' }}</td>
-                                    <td>{{ item.created_at.strftime('%d-%m-%Y') }} </td>
-                                    <td>
-                                        <a href="/view-item/{{ item.id }}" class="btn btn-info">Просмотр</a>
-                                    </td>
+                                    <th>Title</th>
+                                    <th>Price</th>
+                                    <th>Transaction type</th>
+                                    <th>Category</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Товары не найдены.</p>
-                {% endif %}
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                    <tr>
+                                        <td>{{ item.title }}</td>
+                                        <td>{{ item.price }}</td>
+                                        <td>{{ item.item_type }}</td>
+                                        <td>{{ item.category.title if item.category else 'No category' }}</td>
+                                        <td>{{ item.created_at.strftime("%d-%m-%Y") }}</td>
+                                        <td>
+                                            <a href="/view-item/{{ item.id }}" class="btn btn-info">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>Items weren't found</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>
-

@@ -68,6 +68,14 @@ class UserService:
         return True
 
     @staticmethod
+    def get_currency(user_id: int) -> Optional[int]:
+        user: Optional[User] = User.query.get(user_id)
+        if user:
+            return user.currency
+
+        return None
+
+    @staticmethod
     def promote_user(user_email: str) -> Optional[PromoteUserResult]:
         user = User.query.filter_by(email=user_email).first()
 

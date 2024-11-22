@@ -24,10 +24,10 @@ CREATE TABLE users (
 	is_blocked BOOLEAN DEFAULT FALSE,
 	blocked_until TIMESTAMP NULL,
     role user_role DEFAULT 'user',
-	currency INT DEFAULT 100000000000000000,
+	currency INT DEFAULT 1000000000,
 	description TEXT
 );
-
+ALTER TABLE users ALTER COLUMN currency SET DEFAULT 1000000000;
 
 CREATE TYPE complaint_status AS ENUM (
     'confirmed',

@@ -1,4 +1,0 @@
-impl = min(1, b / a) where a > 0
-impl = 1 where a = 0
-t-norm multiplication:
-elem1 * elem2

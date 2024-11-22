@@ -37,7 +37,6 @@ class TransactionService:
                 seller_id=item.owner_id,
                 item_id=item.id,
                 price=item.price,
-                product_id=item.id,
                 transaction_type="buy",
                 status="completed",
             )
@@ -112,11 +111,13 @@ class TransactionService:
             db.session.query(Transaction).filter(
                 Transaction.status == "pending",
                 Transaction.item_id == transaction.item_id,
-                Transaction.id != transaction.id  # Exclude the accepted transaction
+                Transaction.id != transaction.id
             ).update({"status": "rejected"}, synchronize_session=False)
 
             item = ItemService.get_item(transaction.item_id)
             item.owner_id = None
+            exchange_item = ItemService.get_item(transaction.exchange_id)
+            exchange_item.owner_id = None
             db.session.commit()
         except NoResultFound:
             return TransactionError.TradeNotFound
