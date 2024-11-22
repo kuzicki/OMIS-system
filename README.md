@@ -33,6 +33,11 @@ Type for installing necessary packages:
 pip install -r requirements.txt
 ```
 
+### 3. Create PostgreServer
+Before running the app you have to create tables for the Postgre server.
+Feel free to dockerize it or even create it locally on the host machine.
+The script for creating such table is in the sql folder.
+
 ### 3. Start the app
 
 Use Docker Compose to build and start the application:
