@@ -20,8 +20,8 @@ Follow these steps to get the project running with Docker:
 ### 1. Clone the Repository
 
 ```bash
-git clone 
-cd 
+git clone https://github.com/kuzicki/OMIS-system.git
+cd OMIS-system
 ```
 
 ### 2. Configure Environment Variables
