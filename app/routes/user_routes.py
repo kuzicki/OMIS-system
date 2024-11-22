@@ -193,6 +193,12 @@ def view_item(item_id):
     if "user_id" not in session:
         return redirect(url_for("auth_routes.welcome"))
 
+    if UserService.is_blocked:
+        return render_template("blocked.html")
+
+    if not UserService.is_valid:
+        return redirect(url_for("auth_routes.welcome"))
+
     item = Item.query.filter_by(id=item_id).first()
 
     if item is None:
