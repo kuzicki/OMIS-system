@@ -10,7 +10,6 @@ from ..models.category import Category
 from ..models.item import Item
 from ..models.user import User, UserRoleEnum
 
-from sqlalchemy import or_, and_
 from .. import db
 
 
@@ -20,6 +19,12 @@ user_routes = Blueprint("user_routes", __name__)
 def check_user_session():
     if "user_id" not in session:
         return redirect(url_for("auth_routes.welcome"))
+
+    if not UserService.is_valid(session["user_id"]):
+        return redirect(url_for("auth_routes.welcome"))
+
+    if UserService.is_blocked(session["user_id"]):
+        return render_template("blocked.html")
 
     if UserService.is_admin(session["user_id"]):
         return redirect(url_for("admin_routes.panel"))
@@ -33,61 +38,15 @@ def find():
     if redirect_response:
         return redirect_response
 
-    categories = Category.query.filter_by(parent_id=None).all()
-
     selected_category_id = request.args.get("category")
-    selected_category = None
-    if selected_category_id:
-        selected_category = Category.query.get(selected_category_id)
-
     search_term = request.args.get("search", "")
-    items_query = Item.query.join(
-        User,
-        and_(
-            Item.owner_id == User.id,
-            User.is_blocked == False,
-            User.role != UserRoleEnum.admin,
-        ),
-    )  # Ensure owners are not blocked
-
-    if search_term != "":
-        items_query = items_query.filter(Item.title.contains(search_term))
-
-    if selected_category_id:
-        subcategory_ids = [
-            id
-            for id, in db.session.query(Category.id).filter(
-                Category.parent_id == selected_category_id
-            )
-        ]
-
-        items_query = items_query.filter(
-            or_(
-                Item.category_id == selected_category_id,
-                Item.category_id.in_(subcategory_ids),
-            )
-        )
-
     transaction_type = request.args.get("transaction_type", "both")
-
-    if transaction_type != "both":
-        items_query = items_query.filter(Item.item_type == transaction_type)
-
     sort_by = request.args.get("sort_by", "price")
     sort_order = request.args.get("sort_order", "asc")
 
-    if sort_by == "price":
-        if sort_order == "asc":
-            items_query = items_query.order_by(Item.price.asc())
-        else:
-            items_query = items_query.order_by(Item.price.desc())
-    elif sort_by == "created_at":
-        if sort_order == "asc":
-            items_query = items_query.order_by(Item.created_at.asc())
-        else:
-            items_query = items_query.order_by(Item.created_at.desc())
-
-    items = items_query.all()
+    items, selected_category, categories = ItemService.get_find_results(
+        selected_category_id, search_term, transaction_type, sort_by, sort_order
+    )
     return render_template(
         "user_find.html",
         categories=categories,
@@ -101,8 +60,7 @@ def items():
     redirect_response = check_user_session()
     if redirect_response:
         return redirect_response
-    items = Item.query.filter_by(owner_id=session["user_id"]).all()
-    print(session["user_id"])
+    items = ItemService.get_user_items(session["user_id"])
 
     return render_template("user_items.html", items=items)
 
@@ -113,16 +71,9 @@ def remove_item(item_id):
     if redirect_response:
         return redirect_response
 
-    item = Item.query.filter_by(id=item_id, owner_id=session["user_id"]).first()
-
-    if item is None:
-        flash("Item not found or you are not authorized to delete this item.")
+    if ItemService.remove_item(item_id, session["user_id"]):
         return redirect(url_for("user_routes.items"))
 
-    db.session.delete(item)
-    db.session.commit()
-
-    flash("Item removed successfully!")
     return redirect(url_for("user_routes.items"))
 
 
@@ -172,8 +123,7 @@ def add_item():
             image_link=image_path,
         )
 
-        db.session.add(new_item)
-        db.session.commit()
+        ItemService.add_item(new_item)
 
         categories = Category.query.all()
         return render_template("add_item.html", categories=categories)
@@ -240,19 +190,18 @@ def edit_item(item_id):
 
 @user_routes.route("/view-item/<int:item_id>", endpoint="view_item")
 def view_item(item_id):
-    redirect_response = check_user_session()
-    if redirect_response:
-        return redirect_response
+    if "user_id" not in session:
+        return redirect(url_for("auth_routes.welcome"))
 
     item = Item.query.filter_by(id=item_id).first()
+
     if item is None:
         return redirect(url_for("user_routes.find"))
 
     user = UserService.get_user(id=session["user_id"])
     file_preview = ItemService.get_preview(item_id)
-    error_message = session.pop("error_message", None)
     favorite = FavoriteService.is_favorite(session["user_id"], item_id)
-
+    error_message = session.pop("error_message", None)
     return render_template(
         "user_view_item.html",
         item=item,
@@ -265,14 +214,24 @@ def view_item(item_id):
 
 @user_routes.route("/view-user/<int:user_id>")
 def view_profile(user_id):
-    redirect_response = check_user_session()
-    if redirect_response:
-        return redirect_response
+    if "user_id" not in session:
+        return redirect(url_for("auth_routes.welcome"))
 
-    items = Item.query.filter_by(owner_id=user_id).all()
+    if UserService.is_blocked:
+        return render_template("blocked.html")
+
+    if not UserService.is_valid:
+        return redirect(url_for("auth_routes.welcome"))
+
+    items = ItemService.get_user_items(user_id)
     user = UserService.get_user(id=user_id)
 
-    return render_template("user_view_profile.html", items=items, user=user)
+    admin = UserService.get_user(id=session["user_id"])
+    is_admin = admin.role.value
+
+    return render_template(
+        "user_view_profile.html", items=items, user=user, is_admin=is_admin
+    )
 
 
 @user_routes.route("/profile", methods=["GET", "POST"])
@@ -393,7 +352,6 @@ def trade():
 
     trades = TransactionService.get_pending_trades(session["user_id"])
 
-    # Extract additional details for the trades
     trade_details = []
     for trade in trades:
         buyer = User.query.get(trade.buyer_id)
@@ -412,6 +370,7 @@ def trade():
                 "trade_id": trade.id,
             }
         )
+
     message = session.pop("message", None)
     error_message = session.pop("error_message", None)
     return render_template(

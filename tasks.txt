@@ -12,7 +12,7 @@ buy items x
 
 view complaints(add so that blocked users can't visit pages)
 previliged x
-view without buttons
+view without buttons x
 
 remove items from find if the user is banned and also from favorites and the trades
 

@@ -20,6 +20,7 @@ class FavoriteService:
             .filter(Favorite.user_id == user_id)
             .filter(User.is_blocked == expression.false())
             .filter(User.role !=  UserRoleEnum.admin)
+            .filter(Item.owner_id.isnot(None))
             .all()
         )
 
@@ -44,7 +45,7 @@ class FavoriteService:
     @staticmethod
     def add_favorite(user_id: int, item_id: int) -> bool:
         item = ItemService.get_item(item_id)
-        if item is None or user_id == item.id:
+        if item is None or user_id == item.owner_id:
             return False
 
         try:

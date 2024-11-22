@@ -24,7 +24,7 @@ CREATE TABLE users (
 	is_blocked BOOLEAN DEFAULT FALSE,
 	blocked_until TIMESTAMP NULL,
     role user_role DEFAULT 'user',
-	currency INT DEFAULT 1000,
+	currency INT DEFAULT 100000000000000000,
 	description TEXT
 );
 
@@ -35,15 +35,7 @@ CREATE TYPE complaint_status AS ENUM (
     'rejected'
 );
 
-CREATE TABLE complaints (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-	item_id INT REFEREnCES items(id) ON DELETE CASCADE,
-    complaint_text TEXT NOT NULL,
-    status complaint_status DEFAULT 'pending',
-    resolved_at TIMESTAMP NULL,
-    admin_notes TEXT
-);
+
 
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
@@ -133,6 +125,16 @@ CREATE TABLE favorites (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     UNIQUE(user_id, product_id)
+);
+
+CREATE TABLE complaints (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+	item_id INT REFEREnCES items(id) ON DELETE CASCADE,
+    complaint_text TEXT NOT NULL,
+    status complaint_status DEFAULT 'pending',
+    resolved_at TIMESTAMP NULL,
+    admin_notes TEXT
 );
 
 CREATE TABLE transactions (

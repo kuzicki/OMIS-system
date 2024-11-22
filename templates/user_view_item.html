@@ -1,14 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>View Item</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <style>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>View Item</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+              rel="stylesheet" />
+        <style>
       .preview-box {
         width: 200px;
         height: 200px;
@@ -23,15 +21,15 @@
       }
 
       .preview-box img {
-        max-width: 100%;
-        max-height: 100%;
+        max-width: 80%;
+        max-height: 80%;
         object-fit: contain;
       }
 
-      .container-fluid {
-        max-width: 1200px;
-        margin-top: 20px;
-      }
+      <!-- .container-fluid { -->
+      <!--   max-width: 1200px; -->
+      <!--   margin-top: 20px; -->
+      <!-- } -->
 
       .info-section {
         margin-bottom: 20px;
@@ -50,143 +48,111 @@
         max-height: 150px; /* Shortened the height */
         overflow-y: auto; /* Enables scroll if content exceeds height */
       }
-    </style>
-  </head>
-  <body class="bg-light">
-    {% include '_navbar.html' %}
-
-    <div class="container-fluid">
-      <h1 class="display-4 text-primary">View Item</h1>
-
-      <div class="row">
-        <div class="col-md-8">
-          <div class="info-section">
-            <p class="info-title">Name:</p>
-            <p>{{ item.title }}</p>
-          </div>
-          <div class="info-section">
-            <p class="info-title">Price:</p>
-            <p>${{ item.price }}</p>
-          </div>
-          <div class="info-section">
-            <p class="info-title">Item Type:</p>
-            <p>{{ item.item_type }}</p>
-          </div>
-
-          <a
-            href="/view-user/{{ item.owner_id }}"
-            class="btn btn-secondary mb-4"
-            >View author profile</a
-          >
-
-          <div class="info-section">
-            <p class="info-title">Description:</p>
-            <p>{{ item.description }}</p>
-          </div>
-
-          <div class="info-section">
-            <p class="info-title">File Preview (first 500 characters):</p>
-            {% if file_preview %}
-            <div class="file-preview">{{ file_preview }}</div>
-            {% else %}
-            <p>No file uploaded</p>
+        </style>
+    </head>
+    <body class="bg-light">
+            {% if user.role.value != 'admin' %}
+        <div>{% include '_navbar.html' %}</div>
             {% endif %}
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="info-section">
-            <p class="info-title">Category:</p>
-            {% if item.category %}
-            <p>{{ item.category.title }}</p>
-            {% else %}
-            <p>No category</p>
-            {% endif %}
-          </div>
-
-          <div class="info-section">
-            <p class="info-title">Image:</p>
-            {% if item.image_link %}
-            <div class="preview-box">
-              <img
-                src="/static/images/{{item.image_link}}"
-                alt="{{item.image_link}}"
-              />
+        <div class="container-fluid">
+            <h1 class="display-4 text-primary">View Item</h1>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="info-section">
+                        <p class="info-title">Name:</p>
+                        <p>{{ item.title }}</p>
+                    </div>
+                    <div class="info-section">
+                        <p class="info-title">Price:</p>
+                        <p>${{ item.price }}</p>
+                    </div>
+                    <div class="info-section">
+                        <p class="info-title">Item Type:</p>
+                        <p>{{ item.item_type }}</p>
+                    </div>
+                    <a href="/view-user/{{ item.owner_id }}" class="btn btn-secondary mb-4">View author profile</a>
+                    <div class="info-section">
+                        <p class="info-title">Description:</p>
+                        <p>{{ item.description }}</p>
+                    </div>
+                    <div class="info-section">
+                        <p class="info-title">File Preview (first 500 characters):</p>
+                        {% if file_preview %}
+                            <div class="file-preview">{{ file_preview }}</div>
+                        {% else %}
+                            <p>No file uploaded</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-section">
+                        <p class="info-title">Category:</p>
+                        {% if item.category %}
+                            <p>{{ item.category.title }}</p>
+                        {% else %}
+                            <p>No category</p>
+                        {% endif %}
+                    </div>
+                    <div class="info-section">
+                        <p class="info-title">Image:</p>
+                        {% if item.image_link %}
+                            <div class="preview-box">
+                                <img src="/static/images/{{ item.image_link }}"
+                                     alt="{{ item.image_link }}" />
+                            </div>
+                        {% else %}
+                            <p>No image uploaded</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            {% else %}
-            <p>No image uploaded</p>
+            <!-- Buttons Row -->
+            {% if user.role.value != 'admin' %}
+                <div class="d-flex justify-content-center gap-3 mt-5">
+                    {% if item.owner_id != user.id %}
+                        <a href="/make-complaint/{{ item.id }}" class="btn btn-warning">Make Complaint</a>
+                    {% endif %}
+                    {% if item.item_type == 'both' and item.owner_id != user.id %}
+                        <a href="/offer-trade/{{ item.id }}" class="btn btn-success">Offer a Trade</a>
+                        <form action="/buy/{{ item.id }}" method="POST" style="display: inline">
+                            <button type="submit" class="btn btn-primary">Buy</button>
+                        </form>
+                    {% endif %}
+                    {% if item.item_type == 'buy' and item.owner_id != user.id %}
+                        <form action="/buy/{{ item.id }}" method="POST" style="display: inline">
+                            <button type="submit" class="btn btn-primary">Buy</button>
+                        </form>
+                    {% endif %}
+                    {% if item.item_type == 'trade' and item.owner_id != user.id %}
+                        <a href="/offer-trade/{{ item.id }}" class="btn btn-success">Offer a Trade</a>
+                    {% endif %}
+                    {% if user.id == item.owner_id %}
+                        <a href="/edit-item/{{ item.id }}" class="btn btn-secondary">Edit Item</a>
+                        <form action="/remove-item/{{ item.id }}"
+                              method="POST"
+                              style="display: inline">
+                            <button type="submit"
+                                    class="btn btn-danger"
+                                    onclick="return confirm('Are you sure you want to remove this item?')">
+                                Remove
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if not favorite %}
+                        <form action="/add-favorite/{{ item.id }}"
+                              method="POST"
+                              style="display: inline">
+                            <button type="submit" class="btn btn-secondary">MakeFavorite</button>
+                        </form>
+                    {% endif %}
+                </div>
             {% endif %}
-          </div>
+            {% if error_message %}
+                <div class="error-message">
+                    <strong>Error:</strong> {{ error_message }}
+                </div>
+            {% endif %}
         </div>
-      </div>
-
-      <!-- Buttons Row -->
-      <div class="d-flex justify-content-center gap-3 mt-5">
-      {% if item.owner_id != user.id %}
-        <a href="/make-complaint/{{ item.id }}" class="btn btn-warning"
-          >Make Complaint</a
-        >
-      {% endif %}
-
-        {% if item.item_type == 'both' and item.owner_id != user.id %}
-        <a href="/offer-trade/{{ item.id }}" class="btn btn-success"
-          >Offer a Trade</a
-        >
-        <form action="/buy/{{ item.id }}" method="POST" style="display: inline">
-          <button type="submit" class="btn btn-primary">Buy</button>
-        </form>
-        {% endif %} {% if item.item_type == 'buy' and item.owner_id != user.id %}
-        <form action="/buy/{{ item.id }}" method="POST" style="display: inline">
-          <button type="submit" class="btn btn-primary">Buy</button>
-        </form>
-        {% endif %} {% if item.item_type == 'trade' and item.owner_id != user.id %}
-        <a href="/offer-trade/{{ item.id }}" class="btn btn-success"
-          >Offer a Trade</a
-        >
-        {% endif %} {% if user.id == item.owner_id %}
-        <a href="/edit-item/{{ item.id }}" class="btn btn-secondary"
-          >Edit Item</a
-        >
-
-        <form
-          action="/remove-item/{{ item.id }}"
-          method="POST"
-          style="display: inline"
-        >
-          <button
-            type="submit"
-            class="btn btn-danger"
-            onclick="return confirm('Are you sure you want to remove this item?')"
-          >
-            Remove
-          </button>
-        </form>
-
-
-        {% endif %}
-        {% if not favorite %}
-        <form
-          action="/add-favorite/{{ item.id }}"
-          method="POST"
-          style="display: inline"
-        >
-          <button
-            type="submit"
-            class="btn btn-nofity"
-          >
-           MakeFavorite
-          </button>
-        </form>
-        {% endif %}
-
-      </div>
-
-      {% if error_message %}
-      <div class="error-message">
-        <strong>Error:</strong> {{ error_message }}
-      </div>
-      {% endif %}
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>

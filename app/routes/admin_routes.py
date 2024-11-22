@@ -1,18 +1,23 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, flash
 
 from ..services.complaint_service import ComplaintService
-from ..services.user_service import UserService, PromoteUserResult
+from ..services.user_service import UserService
 
 admin_routes = Blueprint("admin_routes", __name__)
+
 
 def check_admin_session():
     if "user_id" not in session:
         return redirect(url_for("auth_routes.welcome"))
 
+    if not UserService.is_valid(session["user_id"]):
+        return redirect(url_for("auth_routes.welcome"))
+
     if not UserService.is_admin(session["user_id"]):
-        return redirect(url_for("user_routes.panel"))
+        return redirect(url_for("user_routes.find"))
 
     return None
+
 
 @admin_routes.route("/panel")
 def panel():
@@ -38,7 +43,9 @@ def promote_user():
         else:
             error_message = res.value
 
-    return render_template("admin_promote_user.html", message=message, error_message=error_message)
+    return render_template(
+        "admin_promote_user.html", message=message, error_message=error_message
+    )
 
 
 @admin_routes.route("/view-complaints")
@@ -56,14 +63,22 @@ def complaint(complaint_id: int):
     redirect_response = check_admin_session()
     if redirect_response:
         return redirect_response
-    complaint = ComplaintService.get_id(complaint_id)   
+    complaint = ComplaintService.get_id(complaint_id)
 
     return render_template("admin_complaint.html", complaint=complaint)
 
-@admin_routes.route("/decline-complaint/<int:complaint_id>")
-def decline_complaint(complaint_id: int):
+
+@admin_routes.route("/handle-complaint/<int:complaint_id>", methods=["POST"])
+def handle_complaint(complaint_id: int):
     redirect_response = check_admin_session()
     if redirect_response:
         return redirect_response
-    
-    return redirect(url_for("admin_routes.view-complaints"))
+
+    print(request.form)
+    action = request.form["action"]
+    if action == "decline":
+        ComplaintService.decline_complaint(complaint_id)
+    elif action == "confirm":
+        ComplaintService.accept_complaint(complaint_id, request.form["admin_notes"])
+
+    return redirect(url_for("admin_routes.view_complaints"))

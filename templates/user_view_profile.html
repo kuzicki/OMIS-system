@@ -10,20 +10,20 @@
     />
   </head>
   <body class="bg-light">
+    {% if is_admin != 'admin' %}
     {% include '_navbar.html' %}
+    {% endif %}
 
     <div class="container-fluid">
       <div class="row">
-        <!-- Left Sidebar: User's Profile -->
         <div class="col-md-3">
-          <h2 class="text-primary">Профиль пользователя</h2>
+          <h2 class="text-primary">User's profile</h2>
           <div class="card">
             <div class="card-body">
-              {% if user.full_name %} <strong>Полное имя:</strong>{{
-              user.full_name }} {% else %} <strong>Полное имя:</strong> нет
-              данных {% endif %}
+              {% if user.full_name %} <strong>Full name:</strong>{{
+              user.full_name }} {% else %} <strong>Full name:</strong> no data {% endif %}
               <p class="card-text">
-                <strong>Никнейм:</strong> {{ user.nickname }}<br />
+                <strong>Nickname:</strong> {{ user.nickname }}<br />
                 <strong>Email:</strong> {{ user.email }}<br />
               </p>
             </div>

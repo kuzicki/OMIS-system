@@ -35,6 +35,23 @@ class UserService:
         return False
 
     @staticmethod
+    def is_blocked(id: int) -> bool:
+        user = User.query.get(id)
+        if user:
+            return user.is_blocked
+
+        return False
+
+    @staticmethod
+    def is_valid(id: int) -> bool:
+        user = User.query.get(id)
+        if user is not None:
+            return True
+
+        return False
+
+
+    @staticmethod
     def get_user(id: int) -> Optional[User]:
         return User.query.get(id)
 

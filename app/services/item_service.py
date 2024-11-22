@@ -4,11 +4,13 @@ from ..services.user_service import UserService
 from ..models.user import User, UserRoleEnum
 from ..models.item import Item
 from ..models.transaction import Transaction
+from ..models.category import Category
 from typing import Optional, Tuple, List
 from .. import db
 import os
 from datetime import datetime
 from sqlalchemy.sql import expression
+from sqlalchemy import or_, and_
 
 SAVED_IMAGES = ".\\static\\images"
 SAVED_FILES = "D:\\Uni\\sem5\\omis\\saved\\files\\"
@@ -36,13 +38,33 @@ class ItemService:
     def get_all_available_products():
         return (
             db.session.query(Item)
-            .join(User, Item.owner_id == User.id)  # Join items with users
+            .join(User, Item.owner_id == User.id)
             .filter(
-                User.is_blocked == expression.false(),
-                User.role != UserRoleEnum.admin
-            )  # Use SQLAlchemy's `is_` for boolean comparison
-            .all()  # Fetch all matching items
+                User.is_blocked == expression.false(), User.role != UserRoleEnum.admin
+            )
+            .all()
         )
+
+    @staticmethod
+    def remove_item(item_id: int, owner_id: int) -> bool:
+        item = Item.query.filter_by(id=item_id, owner_id=owner_id).first()
+
+        if item is None:
+            return False
+
+        db.session.delete(item)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def add_item(new_item: Item):
+        db.session.add(new_item)
+        db.session.commit()
+
+    @staticmethod
+    def get_user_items(user_id: int) -> List[Item]:
+        items = Item.query.filter_by(owner_id=user_id).all()
+        return items
 
     @staticmethod
     def upload_new_files(
@@ -73,17 +95,82 @@ class ItemService:
         return Item.query.filter_by(owner_id=user_id).all()
 
     @staticmethod
+    def get_find_results(
+        selected_category_id: Optional[str],
+        search_term: str,
+        transaction_type: str,
+        sort_by: str,
+        sort_order: str,
+    ) -> Tuple[List[Item], Optional[Category], List[Category]]:
+
+        categories = Category.query.filter_by(parent_id=None).all()
+        selected_category = None
+        if selected_category_id:
+            selected_category = Category.query.get(selected_category_id)
+
+        if selected_category_id:
+            subcategory_ids = [
+                id
+                for id, in db.session.query(Category.id).filter(
+                    Category.parent_id == selected_category_id
+                )
+            ]
+
+        items_query = Item.query.join(
+            User,
+            and_(
+                Item.owner_id == User.id,
+                User.is_blocked == False,
+                User.role != UserRoleEnum.admin,
+            ),
+        )
+
+        if search_term != "":
+            items_query = items_query.filter(Item.title.contains(search_term))
+
+            items_query = items_query.filter(
+                or_(
+                    Item.category_id == selected_category_id,
+                    Item.category_id.in_(subcategory_ids),
+                )
+            )
+
+        if transaction_type != "both":
+            items_query = items_query.filter(Item.item_type == transaction_type)
+
+        if sort_by == "price":
+            if sort_order == "asc":
+                items_query = items_query.order_by(Item.price.asc())
+            else:
+                items_query = items_query.order_by(Item.price.desc())
+        elif sort_by == "created_at":
+            if sort_order == "asc":
+                items_query = items_query.order_by(Item.created_at.asc())
+            else:
+                items_query = items_query.order_by(Item.created_at.desc())
+
+        items = items_query.all()
+        return (items, selected_category, categories)
+
+    @staticmethod
     def get_my_items_for_trade(user_id: int, item_id: int) -> List[Item]:
-        subquery = db.session.query(Transaction.exchange_id).filter(
-            ((Transaction.item_id == item_id) | (Transaction.exchange_id == item_id)),
-            Transaction.status == "pending",
-            Transaction.exchange_id.isnot(None)  # Exclude NULL exchange IDs
-        ).subquery()
+        subquery = (
+            db.session.query(Transaction.exchange_id)
+            .filter(
+                (
+                    (Transaction.item_id == item_id)
+                    | (Transaction.exchange_id == item_id)
+                ),
+                Transaction.status == "pending",
+                Transaction.exchange_id.isnot(None),  # Exclude NULL exchange IDs
+            )
+            .subquery()
+        )
 
         # Query to get all items owned by the user that are not in the subquery
         available_items = Item.query.filter(
             Item.owner_id == user_id,
-            Item.id.notin_(subquery)  # Ensure items aren't in the subquery
+            Item.id.notin_(subquery),  # Ensure items aren't in the subquery
         ).all()
 
         return available_items
