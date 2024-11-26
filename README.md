@@ -24,9 +24,9 @@ git clone https://github.com/kuzicki/OMIS-system.git
 cd OMIS-system
 ```
 
-### 2. Configure Environment Variables
+### 2. Craate venv
 
-Create a `.env` file in the project root
+Create a python virual environment in the project root
 
 Type for installing necessary packages:
 ```
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 ### 3. Create PostgreServer
 Before running the app you have to create tables for the Postgre server.
 Feel free to dockerize it or even create it locally on the host machine.
-The script for creating such table is in the sql folder.
+The script for creating the table is in the sql folder.
 
 ### 4. Change the database URI
 After creating the postgre server you have to change the database URI in the config.py folder.
