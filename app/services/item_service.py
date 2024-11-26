@@ -13,7 +13,7 @@ from sqlalchemy.sql import expression
 from sqlalchemy import or_, and_
 
 SAVED_IMAGES = ".\\static\\images"
-SAVED_FILES = "D:\\Uni\\sem5\\omis\\saved\\files\\"
+SAVED_FILES = ".\\saved\\files\\"
 
 
 class ItemService:
