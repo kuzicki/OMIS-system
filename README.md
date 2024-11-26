@@ -15,7 +15,7 @@ A system for trading and buying different types of digital goods by with many us
 
 ## Getting Started
 
-Follow these steps to get the project running with Docker:
+Follow these steps to get the project running:
 
 ### 1. Clone the Repository
 
