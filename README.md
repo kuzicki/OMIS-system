@@ -38,7 +38,10 @@ Before running the app you have to create tables for the Postgre server.
 Feel free to dockerize it or even create it locally on the host machine.
 The script for creating such table is in the sql folder.
 
-### 3. Start the app
+### 4. Change the database URI
+After creating the postgre server you have to change the database URI in the config.py folder.
+
+### 5. Start the app
 
 Use Docker Compose to build and start the application:
 
@@ -46,13 +49,13 @@ Use Docker Compose to build and start the application:
 python main.py
 ```
 
-### 4. Access the Application
+### 6. Access the Application
 
 Once the app is running, you can access the application at:
 
 http://localhost:5000/
 
-### 5. Stop the Application
+### 7. Stop the Application
 
 Input the Keyboard Interrupt command(Ctrl + C)
 
