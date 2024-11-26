@@ -3,7 +3,26 @@ from ..models.item import Item
 from typing import Optional
 from .. import db
 from enum import Enum
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timezone
 
+
+def unblock_users():
+    from main import app
+    with app.app_context():
+        current_time = datetime.now(timezone.utc)
+        users_to_unblock = User.query.filter(
+            User.is_blocked == True, User.blocked_until <= current_time
+        ).all()
+        for user in users_to_unblock:
+            user.is_blocked = False
+            user.blocked_until = None
+
+        db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(unblock_users, "interval", minutes=10)
+scheduler.start()
 
 class PromoteUserResult(Enum):
     NoUser = ("There's no such user",)

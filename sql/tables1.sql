@@ -20,7 +20,6 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     nickname VARCHAR(255) NOT NULL,
     full_name VARCHAR(255),
-    profile_picture VARCHAR(255),
 	is_blocked BOOLEAN DEFAULT FALSE,
 	blocked_until TIMESTAMP NULL,
     role user_role DEFAULT 'user',

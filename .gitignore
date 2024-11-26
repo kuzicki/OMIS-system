@@ -3,4 +3,6 @@ __pycache__/
 saved/files/*
 static/images/*
 .pyrightconfig.json
-.testing_data
+.report.docx
+.report.txt
+/testing_data
